@@ -4,8 +4,9 @@ import (
 	"context"
 	"log"
 	"time"
-
+	"os"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,12 +14,31 @@ import (
 )
 
 func main() {
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("error loading .env file", err)
+	}
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		log.Fatal("$SERVER_PORT must be set")
+	}
+
+	DBURI := os.Getenv("DB_URI")
+	if DBURI == "" {
+		log.Fatal("$DB_URI must be set")
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	dbClient, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	dbClient, err := mongo.Connect(ctx, options.Client().ApplyURI(DBURI))
 	if err != nil {
 		log.Fatal(err)
 	}
+	if err := dbClient.Ping(ctx, nil); err != nil {
+		log.Fatal(err.Error())
+	}
+	log.Println("mongodb connected")
 
 	sensorDb := dbClient.Database("sensor-server")
 	sensorDataCollection := sensorDb.Collection("sensor-data")
@@ -58,12 +78,13 @@ func main() {
 		err := deviceStatusCollection.FindOne(context.Background(), bson.M{"_id": deviceStatusId}).Decode(ds)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				newDs, err := deviceStatusCollection.InsertOne(context.Background(), &DeviceStatus{Id: deviceStatusId, IsOn: false, WifiConnected: false, UpdatedAt: time.Now()})
+				newDeviceStatus:=&DeviceStatus{Id: deviceStatusId, IsOn: false, WifiConnected: false, UpdatedAt: time.Now()}
+				_, err := deviceStatusCollection.InsertOne(context.Background(), newDeviceStatus)
 				if err != nil {
 					c.JSON(500, gin.H{"error": err.Error()})
 					return
 				}
-				c.JSON(200, newDs)
+				c.JSON(200, newDeviceStatus)
 				return
 			}
 			c.JSON(500, gin.H{"error": err.Error()})
