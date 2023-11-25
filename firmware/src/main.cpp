@@ -49,8 +49,8 @@ DHT dht(DHTPIN, DHTTYPE);
 // Timing variables
 unsigned long lastSensorReadTime = 0;
 unsigned long lastSendTime = 0;
-const unsigned long sensorReadInterval = 60000; // Interval to read sensor (7 seconds)
-const unsigned long sendDataInterval = 60000;   // Interval to send data (7 seconds)
+const unsigned long sensorReadInterval = 60000; // Interval to read sensor (60 seconds)
+const unsigned long sendDataInterval = 60000;   // Interval to send data (60 seconds)
 
 void setup()
 {
