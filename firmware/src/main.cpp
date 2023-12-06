@@ -49,8 +49,8 @@ DHT dht(DHTPIN, DHTTYPE);
 // Timing variables
 unsigned long lastSensorReadTime = 0;
 unsigned long lastSendTime = 0;
-const unsigned long sensorReadInterval = 60000; // Interval to read sensor (60 seconds)
-const unsigned long sendDataInterval = 60000;   // Interval to send data (60 seconds)
+const unsigned long sensorReadInterval = 10000; // Interval to read sensor (10 seconds)
+const unsigned long sendDataInterval = 10000;   // Interval to send data (10 seconds)
 
 void setup()
 {
@@ -112,7 +112,7 @@ void connectToWifi()
 {
   WiFi.begin(ssid, password);
   Serial.println("Connecting to WiFi");
-  
+
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
@@ -170,16 +170,22 @@ String createSensorDataJson(SensorData sensor)
   return jsonData;
 }
 
-String createDeviceStatusJson(DeviceStatus device)
-{
-  StaticJsonDocument<200> doc;
-  doc["isOn"] = device.isOn;
-  doc["wifiConnected"] = device.wifiConnected;
+String createDeviceStatusJson(DeviceStatus device) {
+  String jsonData = "{";
 
-  String jsonData;
-  serializeJson(doc, jsonData);
+  jsonData += "\"isOn\":\"";
+  jsonData += (device.isOn ? "true" : "false");
+  jsonData += "\",";
+
+  jsonData += "\"wifiConnected\":\"";
+  jsonData += (device.wifiConnected ? "true" : "false");
+  jsonData += "\"";
+
+  jsonData += "}";
+
   return jsonData;
 }
+
 
 void sendToServer(String data, String endpoint)
 {
